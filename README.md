@@ -1,10 +1,7 @@
 # 🩸 BloodConnect – Blood Donation App
 
 BloodBridge is a mobile application built to connect blood donors, recipients, hospitals, and blood banks in real time. This app helps users find and request blood, track donation history, and respond to emergencies efficiently.
-## 🌐 Live Website
 
-Check out the deployed version of the project:  
-🔗 [https://architha.netlify.app](https://architha.netlify.app)
 
 ## 🚀 Features
 
@@ -33,7 +30,7 @@ Check out the deployed version of the project:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Architha-05/blood-donation.git
+git clone  https://github.com/CharishmaNelakurthi/Blood-connect-.git
 cd blood-donation
 
 ### 2. Install Capacitor & Android Dependencies
@@ -80,4 +77,4 @@ Install this on Android devices to test or distribute your app.
 This project is developed for educational purposes. You are free to use or extend it with attribution.
 
 🧑‍💻 Developed by
-Architha Mukkapati
+Charishma Nelakurthi
