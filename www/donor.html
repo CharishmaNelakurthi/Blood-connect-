@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BloodConnect — Donor Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body { min-height: 100vh; background: linear-gradient(to bottom right, #fef2f2, #fce7f3); }
+    .text-red { color: #dc2626; }
+    .bg-red { background-color: #dc2626 !important; color: #fff !important; }
+    .btn-outline-red { border: 1px solid #fecaca; color: #dc2626; }
+    .btn-outline-red:hover { background: #fee2e2; }
+    .badge-outline-red { border: 1px solid #fecaca; color: #dc2626; }
+    .rounded-full { border-radius: 9999px; }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      background-color: #fee2e2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #dc2626;
+    }
+    .list-group-flush li {
+      list-style: none;
+      padding-left: 0;
+    }
+  </style>
+</head>
+<body>
+<main class="container py-4">
+  <header class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+    <h1 class="h4 text-red fw-bold mb-0">BloodConnect <span class="badge badge-outline-red">Donor</span></h1>
+    <div>
+      <span id="userName" class="me-3"></span>
+      <button id="logoutBtn" class="btn btn-outline-secondary btn-sm">Logout</button>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <section class="mb-5">
+    <h2 class="h5 mb-3 text-dark d-flex align-items-center">
+      <span class="me-2">🚨</span> Emergency Blood Requests
+    </h2>
+    <div id="alertList" class="row gy-4"></div>
+  </section>
+
+  <div class="row gy-4 mb-4">
+  <!-- Profile Card -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="profile-avatar rounded-full mx-auto mb-3">👤</div>
+        <h5 id="profileName" class="fw-semibold mb-1"></h5>
+        <p id="profileEmail" class="text-muted mb-2"></p>
+        <span id="profileBloodType" class="badge bg-red mb-2"></span>
+        <ul class="list-group list-group-flush text-start my-3">
+          <li>📞 <b id="profilePhone"></b></li>
+          <li>🎂 Age: <b id="profileAge"></b></li>
+          <li>📍 <b id="profileCity"></b></li>
+          <li>🗓 Next donation: <b id="nextDonation"></b></li>
+        </ul>
+        <button class="btn bg-red w-100" data-bs-toggle="modal" data-bs-target="#updateModal">Update Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donation Eligibility Card -->
+  <div class="col-lg-7">
+  <div class="card shadow-sm mb-0" style="min-height: 180px;"> <!-- Added height -->
+    <div class="card-body py-4"> <!-- Slightly increased padding -->
+      <h5 class="card-title mb-3 fs-6">🗓️ Donation Eligibility</h5>
+      <p class="mb-3" style="font-size: 0.95rem;">
+        Next eligible donation date: <b id="nextEligibleDate">--/--/----</b>
+        <span id="eligibilityTag" class="badge bg-success ms-2">Eligible Now</span>
+      </p>
+      <div class="progress mb-3" style="height: 8px;">
+        <div class="progress-bar bg-danger" id="donationProgress" role="progressbar" style="width: 0%;"></div>
+      </div>
+      <button class="btn btn-sm w-100 text-white"
+        style="background: linear-gradient(to right, #dc2626, #2563eb);"
+        data-bs-toggle="modal" data-bs-target="#scheduleDonationModal">
+  ❤️ Schedule Donation
+</button>
+    </div>
+  </div>
+</div>
+
+      <div class="card shadow-sm mb-5">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Donation History</h5>
+          <div id="historyList" class="list-group"></div>
+          <button class="btn btn-outline-secondary w-100 mt-3">View All History</button>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4"><div class="card text-center shadow-sm p-4"><h3 class="text-red fw-bold mb-1">15</h3><small>Lives Saved</small></div></div>
+        <div class="col-md-4"><div class="card text-center shadow-sm p-4"><h3 class="text-red fw-bold mb-1">5</h3><small>Total Donations</small></div></div>
+        <div class="col-md-4"><div class="card text-center shadow-sm p-4"><h3 class="text-red fw-bold mb-1">2.25 L</h3><small>Blood Donated</small></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Update Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="updateProfileForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" id="editName" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Phone</label>
+          <input type="text" class="form-control" id="editPhone" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Age</label>
+          <input type="number" class="form-control" id="editAge" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">City</label>
+          <input type="text" class="form-control" id="editCity" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn bg-red">Save Changes</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- SCHEDULE DONATION MODAL (Add this before </body>) -->
+<div class="modal fade" id="scheduleDonationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="donationForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Schedule Blood Donation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-control" id="donationDate" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Time</label>
+          <input type="time" class="form-control" id="donationTime" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Location Type</label>
+          <select class="form-select" id="locationType" required>
+            <option value="Hospital">Hospital</option>
+            <option value="Blood Bank">Blood Bank</option>
+          </select>
+        </div>
+        <div class="mb-3">
+  <label class="form-label">Hospital Name</label>
+  <input type="text" class="form-control" id="hospitalName" placeholder="e.g. Apollo Vijayawada" required />
+</div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn text-white" style="background: linear-gradient(to right, #dc2626, #2563eb);">
+          Schedule Donation
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Firebase & Bootstrap JS -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1femOc87pxd93vXHhulZjc5Q_DVyYOao",
+    authDomain: "blood-donation-35854.firebaseapp.com",
+    projectId: "blood-donation-35854",
+    storageBucket: "blood-donation-35854.appspot.com",
+    messagingSenderId: "652833129038",
+    appId: "1:652833129038:web:da042bd0e9d7685c9d791f"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const email = JSON.parse(localStorage.getItem('userData'))?.email;
+  if (!email) {
+    alert("User not logged in");
+    location.href = "index.html";
+  }
+
+  let user = {};
+  const alerts = [];
+
+  async function fetchUserProfile() {
+    try {
+      const snapshot = await db.collection('donor').where('email', '==', email).get();
+      if (snapshot.empty) throw new Error("No user found");
+      const doc = snapshot.docs[0];
+      user = { id: doc.id, ...doc.data() };
+      renderProfile();
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  }
+
+async function fetchAlerts() {
+  try {
+    const snapshot = await db.collection('requests').orderBy('timestamp', 'desc').get();
+    alerts.length = 0;
+
+    const resSnap = await db.collection('responses').where('donorEmail', '==', email).get();
+    const respondedIds = resSnap.docs.map(doc => doc.data().requestId);
+
+    // Process requests with additional info
+    for (const doc of snapshot.docs) {
+      const alert = { id: doc.id, ...doc.data() };
+      alert.responded = respondedIds.includes(alert.id);
+
+      const emailKey = alert.recipientEmail || alert.requesterEmail || '';
+      const locationType = alert.locationType || 'Recipient';
+
+      let snap;
+      if (locationType === 'Hospital') {
+        snap = await db.collection('hospital').where('email', '==', emailKey).get();
+      } else if (locationType === 'Blood Bank') {
+        snap = await db.collection('bloodbank').where('email', '==', emailKey).get();
+      } else {
+        snap = await db.collection('recipient').where('email', '==', emailKey).get();
+      }
+
+      if (snap && !snap.empty) {
+  const data = snap.docs[0].data();
+  alert.requestedBy = data.fullName || data.name || alert.requestedBy || 'Unknown';
+  alert.phone = data.phone || 'Not available';
+  alert.city = data.city || 'Unknown';
+}
+
+      alerts.push(alert);
+    }
+
+    renderAlerts();
+  } catch (err) {
+    console.error("Error fetching alerts:", err);
+  }
+}
+
+function handleRespond(requestId, recipientEmail, bloodType, city) {
+  respondToRequest(requestId, recipientEmail, bloodType, city).then(() => {
+    // After responding, mark this request as responded and re-render
+    const responded = alerts.find(a => a.id === requestId);
+    if (responded) responded.responded = true;
+    renderAlerts(); // re-render buttons
+  });
+}
+// Add this utility function globally in the same <script>
+async function respondToRequest(requestId, recipientEmail, bloodType, city) {
+  if (!recipientEmail || !requestId) {
+    alert("Invalid request data.");
+    return;
+  }
+
+  try {
+    await db.collection("responses").add({
+      donorEmail: user.email,
+      donorName: user.fullName,
+      donorPhone: user.phone,  // ✅ Add phone number here
+      recipientEmail,
+      requestId,
+      bloodType,
+      city,
+      respondedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    console.error("Failed to respond:", err);
+    alert("Could not send response. Try again.");
+  }
+}
+  async function fetchDonationHistory() {
+  try {
+    const snapshot = await db.collection('donations')
+      .where('donorEmail', '==', email)
+      .orderBy('date', 'desc')
+      .get();
+
+    const historyList = document.getElementById("historyList");
+    historyList.innerHTML = '';
+
+    let latestDate = null;
+
+    snapshot.forEach(doc => {
+      const h = doc.data();
+      const item = document.createElement('div');
+      item.className = 'list-group-item d-flex justify-content-between align-items-center';
+      item.innerHTML = `
+        <div><strong>${h.location}</strong><br><small class="text-muted">${h.date}</small></div>
+          <span class="badge bg-success">${h.status}</span></div>`;
+      historyList.appendChild(item);
+
+      // Update latest donation date
+      if (!latestDate || new Date(h.date) > new Date(latestDate)) {
+        latestDate = h.date;
+      }
+    });
+
+    updateEligibilityStatus(latestDate);
+  } catch (err) {
+    console.error("Error fetching donation history:", err);
+  }
+}
+
+  document.getElementById("updateProfileForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const updatedData = {
+      fullName: document.getElementById("editName").value,
+      phone: document.getElementById("editPhone").value,
+      age: document.getElementById("editAge").value,
+      city: document.getElementById("editCity").value,
+    };
+    try {
+      await db.collection("donor").doc(user.id).update(updatedData);
+      Object.assign(user, updatedData);
+      renderProfile();
+      bootstrap.Modal.getInstance(document.getElementById("updateModal")).hide();
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error("Update failed", err);
+    }
+  });
+
+  function renderProfile() {
+    document.getElementById("userName").innerText = user.fullName;
+    document.getElementById("profileName").innerText = user.fullName;
+    document.getElementById("profileEmail").innerText = user.email;
+    document.getElementById("profilePhone").innerText = user.phone;
+    document.getElementById("profileCity").innerText = user.city;
+    document.getElementById("profileBloodType").innerText = user.bloodType;
+    document.getElementById("profileAge").innerText = user.age;
+    document.getElementById("nextDonation").innerText = formatNextDonationDate();
+
+    document.getElementById("editName").value = user.fullName;
+    document.getElementById("editPhone").value = user.phone;
+    document.getElementById("editAge").value = user.age;
+    document.getElementById("editCity").value = user.city;
+  }
+
+function renderAlerts() {
+  const container = document.getElementById("alertList");
+  container.innerHTML = '';
+
+  const firstTwo = alerts.slice(0, 2);
+  const remaining = alerts.slice(2);
+
+  // Helper to render a single alert card
+  function createAlertCard(a) {
+  const col = document.createElement('div');
+  col.className = 'col-md-6';
+
+  const alertId = a.id || '';
+  const recipientEmail = a.recipientEmail || a.requesterEmail || '';
+  const recipientPhone = a.phone || 'Not available';
+  const location = a.city || a.locationType || 'Unknown';
+  const isResponded = a.responded;
+  const requestedBy = a.requestedBy || 'Unknown';
+
+  col.innerHTML = `
+    <div class="border p-3 rounded bg-light">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="fw-semibold text-red mb-1">${a.bloodType} Blood Needed</p>
+          <p class="text-muted small">📍 ${location}</p>
+          <p class="text-muted small">🙋‍♂️ Requested by: ${requestedBy}</p>
+          <p class="text-muted small">📞 ${recipientPhone}</p>
+          <p class="text-danger small">${a.time || ''}</p>
+        </div>
+        <span class="badge ${a.urgency === "Critical" ? "bg-danger" : "bg-warning"}">${a.urgency}</span>
+      </div>
+      <button class="btn btn-sm w-100 mt-3 ${isResponded ? 'btn-secondary' : 'bg-red'}"
+        ${isResponded ? 'disabled' : `onclick="handleRespond('${alertId}', '${recipientEmail}', '${a.bloodType}', '${location}')"`}>
+        ${isResponded ? 'Request Sent' : 'Respond'}
+      </button>
+    </div>
+  `;
+  return col;
+}
+
+  // Render first 2 alerts
+  firstTwo.forEach(a => {
+    container.appendChild(createAlertCard(a));
+  });
+
+  // If more alerts exist, add "View More" button
+  if (remaining.length > 0) {
+    const viewMoreWrapper = document.createElement('div');
+    viewMoreWrapper.className = 'col-12 text-center mt-3';
+
+    const viewMoreBtn = document.createElement('button');
+    viewMoreBtn.className = 'btn btn-outline-secondary';
+    viewMoreBtn.innerText = "View More";
+
+    viewMoreBtn.onclick = () => {
+      // Render remaining alerts
+      remaining.forEach(a => {
+        container.appendChild(createAlertCard(a));
+      });
+      viewMoreWrapper.remove(); // remove the View More button after click
+    };
+
+    viewMoreWrapper.appendChild(viewMoreBtn);
+    container.appendChild(viewMoreWrapper);
+  }
+}
+  // Update eligibility date and progress bar
+function updateEligibilityStatus(latestDonationDate = null) {
+  const tag = document.getElementById("eligibilityTag");
+  const progress = document.getElementById("donationProgress");
+  const nextEligibleDateText = document.getElementById("nextEligibleDate");
+
+  if (!latestDonationDate) {
+    tag.innerText = "No donations yet";
+    tag.className = "badge bg-secondary ms-2";
+    nextEligibleDateText.innerText = "--/--/----";
+    progress.style.width = "0%";
+    return;
+  }
+
+  const lastDate = new Date(latestDonationDate);
+  const nextEligibleDate = new Date(lastDate);
+  nextEligibleDate.setDate(lastDate.getDate() + 90);
+
+  const today = new Date();
+  nextEligibleDateText.innerText = nextEligibleDate.toLocaleDateString();
+
+  if (today >= nextEligibleDate) {
+    tag.innerText = "Eligible Now";
+    tag.className = "badge bg-success ms-2";
+    progress.style.width = "100%";
+  } else {
+    tag.innerText = "Not Yet Eligible";
+    tag.className = "badge bg-warning text-dark ms-2";
+    const total = 90;
+    const remaining = Math.ceil((nextEligibleDate - today) / (1000 * 60 * 60 * 24));
+    const done = total - remaining;
+    const percent = Math.round((done / total) * 100);
+    progress.style.width = percent + "%";
+  }
+}
+
+document.getElementById("donationForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const donation = {
+  donorEmail: user.email,
+  donorName: user.fullName, // optional but helpful
+  bloodType: user.bloodType, // ✅ Add this
+  date: document.getElementById("donationDate").value,
+  time: document.getElementById("donationTime").value,
+  locationType: document.getElementById("locationType").value,
+  location: document.getElementById("hospitalName").value,
+  hospitalName: document.getElementById("hospitalName").value,
+  status: "Scheduled"
+};
+
+  try {
+    await db.collection("donations").add(donation);
+    alert("Donation scheduled successfully!");
+    bootstrap.Modal.getInstance(document.getElementById("scheduleDonationModal")).hide();
+    fetchDonationHistory(); // Refresh history
+  } catch (err) {
+    console.error("Error scheduling donation:", err);
+    alert("Failed to schedule donation");
+  }
+});
+
+// Call eligibility status setup
+updateEligibilityStatus();
+  function formatNextDonationDate() {
+    const date = new Date();
+    date.setDate(date.getDate() + 90);
+    return date.toLocaleDateString();
+  }
+
+  document.getElementById("logoutBtn").onclick = () => {
+    auth.signOut().then(() => location.href = "index.html");
+  };
+
+  fetchUserProfile();
+  fetchAlerts();
+  fetchDonationHistory();
+</script>
+</body>
+</html>

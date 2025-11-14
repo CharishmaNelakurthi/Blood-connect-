@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register - BloodConnect</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      background: #fff;
+      max-width: 900px;
+      width: 100%;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      text-align: center;
+      color: #dc2626;
+      margin-bottom: 8px;
+    }
+
+    .card p.description {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 768px) {
+      .form-grid.two-col {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-input,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .form-input:focus,
+    select:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 2px #fecaca;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #dc2626;
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .btn:hover {
+      background-color: #b91c1c;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+    }
+
+    .footer button {
+      background: none;
+      border: none;
+      color: #dc2626;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .alert {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Join BloodConnect</h2>
+    <p class="description">Register to become part of our life-saving community</p>
+
+    <form id="registerForm">
+      <div id="error" class="alert hidden"></div>
+
+      <div class="form-grid two-col">
+        <div>
+          <label for="userType">I am a *</label>
+          <select id="userType" name="userType" class="form-input">
+            <option value="donor">Blood Donor</option>
+            <option value="recipient">Blood Recipient</option>
+            <option value="hospital">Hospital</option>
+            <option value="bloodbank">Blood Bank</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="fullName" id="fullNameLabel">Full Name *</label>
+          <input type="text" id="fullName" name="fullName" class="form-input" placeholder="Enter your full name" />
+        </div>
+      </div>
+
+      <div class="form-grid two-col">
+        <div>
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" class="form-input" placeholder="Enter email address" />
+        </div>
+        <div>
+          <label for="phone">Phone Number *</label>
+          <input type="tel" id="phone" name="phone" class="form-input" placeholder="Enter phone number" />
+        </div>
+      </div>
+
+      <div class="form-grid two-col" id="bloodAndAgeGroup">
+        <div>
+          <label for="bloodType">Blood Type *</label>
+          <select id="bloodType" name="bloodType" class="form-input">
+            <option value="">Select Blood Type</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+        <div>
+          <label for="age">Age</label>
+          <input type="number" id="age" name="age" class="form-input" placeholder="Enter your age" min="18" max="65" />
+        </div>
+      </div>
+
+      <div class="form-grid two-col">
+        <div>
+          <label for="address">Address</label>
+          <input type="text" id="address" name="address" class="form-input" placeholder="Enter your address" />
+        </div>
+        <div>
+          <label for="city">City</label>
+          <input type="text" id="city" name="city" class="form-input" placeholder="Enter your city" />
+        </div>
+      </div>
+
+      <div class="form-grid two-col">
+        <div>
+          <label for="password">Password *</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" class="form-input" placeholder="Create a password" />
+            <button type="button" id="togglePassword" class="toggle-password">👁️</button>
+          </div>
+        </div>
+        <div>
+          <label for="confirmPassword">Confirm Password *</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Confirm your password" />
+        </div>
+      </div>
+
+      <button type="submit" class="btn">Create Account</button>
+    </form>
+
+    <div class="footer">
+      Already have an account? 
+      <button onclick="window.location.href='index.html'">Sign in here</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+<!-- Use compatibility version for browser support -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // 1. Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1femOc87pxd93vXHhulZjc5Q_DVyYOao",
+    authDomain: "blood-donation-35854.firebaseapp.com",
+    projectId: "blood-donation-35854",
+    storageBucket: "blood-donation-35854.appspot.com",
+    messagingSenderId: "652833129038",
+    appId: "1:652833129038:web:da042bd0e9d7685c9d791f",
+    measurementId: "G-YTC8LRW1RB"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // 2. DOM elements
+  const form = document.getElementById('registerForm');
+  const togglePassword = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  const userTypeSelect = document.getElementById('userType');
+  const fullNameLabel = document.getElementById('fullNameLabel');
+  const fullNameInput = document.getElementById('fullName');
+  const bloodGroupSection = document.getElementById('bloodAndAgeGroup');
+  const errorBox = document.getElementById('error');
+
+  togglePassword.addEventListener('click', () => {
+    const show = passwordInput.type === 'password';
+    passwordInput.type = show ? 'text' : 'password';
+    togglePassword.textContent = show ? '🙈' : '👁️';
+  });
+
+  userTypeSelect.addEventListener('change', () => {
+    const userType = userTypeSelect.value;
+    const isOrg = userType === 'hospital' || userType === 'bloodbank';
+
+    fullNameLabel.textContent = isOrg ? 'Organization Name *' : 'Full Name *';
+    fullNameInput.placeholder = isOrg ? 'Enter organization name' : 'Enter your full name';
+    bloodGroupSection.style.display = isOrg ? 'none' : 'grid';
+  });
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.remove('hidden');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      userType: userTypeSelect.value,
+      fullName: fullNameInput.value.trim(),
+      email: form.email.value.trim(),
+      phone: form.phone.value.trim(),
+      bloodType: form.bloodType.value,
+      age: form.age.value,
+      address: form.address.value,
+      city: form.city.value,
+      password: form.password.value,
+      confirmPassword: form.confirmPassword.value
+    };
+
+    // Validation
+    if (!formData.fullName || !formData.email || !formData.phone || !formData.password) {
+      showError('Please fill in all required fields');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      showError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      showError('Password must be at least 6 characters');
+      return;
+    }
+
+    if ((formData.userType === 'donor' || formData.userType === 'recipient') && !formData.bloodType) {
+      showError('Blood type is required');
+      return;
+    }
+
+    try {
+      // 3. Register user in Firebase Auth
+      const userCredential = await auth.createUserWithEmailAndPassword(formData.email, formData.password);
+      const uid = userCredential.user.uid;
+
+      // 4. Store user data in Firestore
+      await db.collection(formData.userType).doc(uid).set({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        bloodType: formData.bloodType || null,
+        age: formData.age || null,
+        address: formData.address,
+        city: formData.city,
+        userType: formData.userType,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      localStorage.setItem('userData', JSON.stringify({ uid, ...formData }));
+      localStorage.setItem('isLoggedIn', 'true');
+
+      // 5. Redirect
+      switch (formData.userType) {
+        case 'donor': window.location.href = 'donor.html'; break;
+        case 'recipient': window.location.href = 'recipient.html'; break;
+        case 'hospital': window.location.href = 'hospital.html'; break;
+        case 'bloodbank': window.location.href = 'bloodbank.html'; break;
+        default: window.location.href = 'index.html'; break;
+      }
+
+    } catch (error) {
+      showError(error.message);
+      console.error("Registration error:", error);
+    }
+  });
+
+  // Initialize view on load
+  userTypeSelect.dispatchEvent(new Event('change'));
+</script>
+</body>
+</html>

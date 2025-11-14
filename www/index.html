@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BloodConnect Login</title>
+
+  <!-- Firebase Compatibility SDKs (Do NOT use modular imports in HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+      padding: 24px;
+    }
+
+    .card-header h2 {
+      text-align: center;
+      color: #dc2626;
+      margin: 0;
+    }
+
+    .card-header p {
+      text-align: center;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 2px #fecaca;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background-color: #dc2626;
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #b91c1c;
+    }
+
+    .card-footer {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .link {
+      background: none;
+      border: none;
+      color: #dc2626;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: 4px;
+    }
+
+    .alert {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h2>BloodConnect</h2>
+      <p>Sign in to save lives and connect with donors</p>
+    </div>
+
+    <div class="card-content">
+      <form id="loginForm">
+        <div id="error" class="alert hidden"></div>
+
+        <div class="form-group">
+          <label for="userType">I am a</label>
+          <select id="userType" class="form-input">
+            <option value="donor">Blood Donor</option>
+            <option value="recipient">Blood Recipient</option>
+            <option value="hospital">Hospital Staff</option>
+            <option value="bloodbank">Blood Bank Staff</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="Enter your email" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input id="password" type="password" placeholder="Enter your password" class="form-input" />
+            <button type="button" id="togglePassword" class="toggle-password">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn">Sign In</button>
+      </form>
+    </div>
+
+    <div class="card-footer">
+      <p>
+        Don't have an account?
+        <button id="switchToRegister" class="link">Register here</button>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC1femOc87pxd93vXHhulZjc5Q_DVyYOao",
+      authDomain: "blood-donation-35854.firebaseapp.com",
+      projectId: "blood-donation-35854",
+      storageBucket: "blood-donation-35854.appspot.com",
+      messagingSenderId: "652833129038",
+      appId: "1:652833129038:web:da042bd0e9d7685c9d791f",
+      measurementId: "G-YTC8LRW1RB"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('loginForm');
+      const togglePassword = document.getElementById('togglePassword');
+      const passwordInput = document.getElementById('password');
+      const errorBox = document.getElementById('error');
+      const switchToRegister = document.getElementById('switchToRegister');
+
+      let showPassword = false;
+
+      togglePassword.addEventListener('click', () => {
+        showPassword = !showPassword;
+        passwordInput.type = showPassword ? 'text' : 'password';
+        togglePassword.textContent = showPassword ? '🙈' : '👁️';
+      });
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = passwordInput.value.trim();
+        const userType = document.getElementById('userType').value;
+
+        if (!email || !password) {
+          showError("Please fill all fields");
+          return;
+        }
+
+        try {
+          const userCredential = await auth.signInWithEmailAndPassword(email, password);
+          const uid = userCredential.user.uid;
+
+          // Search user in Firestore under the selected user type collection
+          const userDoc = await db.collection(userType).doc(uid).get();
+
+          if (!userDoc.exists) {
+            showError("User not found in selected user type");
+            return;
+          }
+
+          const userData = userDoc.data();
+
+          localStorage.setItem('userData', JSON.stringify(userData));
+          localStorage.setItem('isLoggedIn', 'true');
+
+          switch (userType) {
+            case 'donor':
+              window.location.href = 'donor.html';
+              break;
+            case 'recipient':
+              window.location.href = 'recipient.html';
+              break;
+            case 'hospital':
+              window.location.href = 'hospital.html';
+              break;
+            case 'bloodbank':
+              window.location.href = 'bloodbank.html';
+              break;
+            default:
+              window.location.href = 'index.html';
+          }
+
+        } catch (err) {
+          console.error('Login error:', err);
+          showError(err.message || 'Authentication failed');
+        }
+      });
+
+      switchToRegister.addEventListener('click', () => {
+        window.location.href = 'register.html';
+      });
+
+      function showError(message) {
+        errorBox.textContent = message;
+        errorBox.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

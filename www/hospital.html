@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF‑8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BloodConnect — Hospital Dashboard</title>
+  <!-- Include Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Additional styles */
+    .modal-backdrop { z-index: 50; }
+    .toast { animation: fadeOut 4s forwards; }
+    @keyframes fadeOut { 0%, 90% { opacity: 1 } 100% { opacity: 0 } }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+
+  <!-- HEADER -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center space-x-4">
+          <h1 class="text-2xl font-bold text-red-600">BloodConnect</h1>
+          <span class="inline-flex items-center px-2 py-0.5 text-sm font-medium text-green-600 bg-green-50 rounded">Hospital</span>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span id="userFullName" class="text-gray-700"></span>
+          <button id="logoutBtn" class="flex items-center space-x-2 px-2 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="bg-white rounded-lg shadow p-6 text-center">
+        <p class="text-sm font-medium text-gray-600">Total Blood Units</p>
+        <p id="statTotal" class="text-3xl font-bold text-green-600">0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6 text-center">
+        <p class="text-sm font-medium text-gray-600">Active Requests</p>
+        <p id="statActive" class="text-3xl font-bold text-blue-600">0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6 text-center">
+        <p class="text-sm font-medium text-gray-600">Low Stock Alerts</p>
+        <p id="statLow" class="text-3xl font-bold text-red-600">0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6 text-center">
+        <p class="text-sm font-medium text-gray-600">Recent Donations</p>
+        <p id="statRecent" class="text-3xl font-bold text-purple-600">0</p>
+      </div>
+    </div>
+
+    <!-- Inventory & Requests -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Inventory -->
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b"><h2 class="text-lg font-semibold">Blood Inventory</h2></div>
+        <div id="inventoryList" class="p-6 space-y-2"></div>
+        <button id="openInventoryBtn" class="w-full bg-green-600 text-white py-3 rounded-b-lg hover:bg-green-700">Update Inventory</button>
+      </div>
+
+      <!-- Active Requests -->
+      <div class="bg-white rounded-lg shadow">
+  <div class="flex justify-between items-center px-6 py-4 border-b">
+    <h2 class="text-lg font-semibold">Blood Requests</h2>
+    <button id="openRequestModal" class="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Request Blood</button>
+  </div>
+  <div id="requestList" class="p-6 space-y-4"></div>
+</div>
+
+    <!-- Recent Donors -->
+    <!-- Recent Donors -->
+<div class="lg:col-span-2 bg-white rounded-lg shadow overflow-x-auto">
+  <div class="px-6 py-4 border-b"><h2 class="text-lg font-semibold">Scheduled Appointments</h2></div>
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead>
+      <tr class="bg-gray-50">
+        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Donor</th>
+        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Blood Type</th>
+        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Date</th>
+        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Time</th>
+        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Action</th>
+      </tr>
+    </thead>
+    <tbody id="appointmentsTable" class="bg-white divide-y divide-gray-200"></tbody>
+  </table>
+</div>
+
+  </main>
+
+  <!-- MODAL CONTAINER -->
+  <div id="modalContainer"></div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-4"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1femOc87pxd93vXHhulZjc5Q_DVyYOao",
+    authDomain: "blood-donation-35854.firebaseapp.com",
+    projectId: "blood-donation-35854",
+    storageBucket: "blood-donation-35854.appspot.com",
+    messagingSenderId: "652833129038",
+    appId: "1:652833129038:web:da042bd0e9d7685c9d791f"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Authentication check
+  const user = JSON.parse(localStorage.getItem("userData"));
+  if (!user || user.userType !== "hospital") {
+    window.location.href = "login.html";
+  }
+  document.getElementById("userFullName").innerText = user.fullName;
+
+  // Toast helper
+  function showToast(title, message) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast bg-white border-l-4 border-green-500 p-4 shadow rounded';
+    toast.innerHTML = `<strong>${title}</strong><div>${message}</div>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+
+  // Logout
+  document.getElementById("logoutBtn").onclick = () => {
+    localStorage.clear();
+    showToast("Logged Out", "You have been successfully logged out.");
+    setTimeout(() => window.location.href = "index.html", );
+  };
+
+  // Inventory state
+  let bloodInventory = {
+    'A+': 0, 'A-': 0, 'B+': 0, 'B-': 0,
+    'AB+': 0, 'AB-': 0, 'O+': 0, 'O-': 0
+  };
+
+  // Fetch initial inventory from Firestore
+  async function loadInventory() {
+    const doc = await db.collection("inventories").doc(user.email).get();
+    if (doc.exists) {
+      bloodInventory = doc.data();
+    }
+    renderInventory();
+    updateStats();
+  }
+
+  function renderInventory() {
+    const list = document.getElementById("inventoryList");
+    list.innerHTML = '';
+    for (const [type, units] of Object.entries(bloodInventory)) {
+      const dot = units > 20 ? 'bg-green-500' : units > 10 ? 'bg-yellow-500' : 'bg-red-500';
+      const div = document.createElement("div");
+      div.className = "flex justify-between items-center p-3 border rounded-lg";
+      div.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <span class="px-2 py-1 bg-red-600 text-white rounded">${type}</span>
+          <span>${units} units</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          ${units < 10 ? `<button onclick="sendAlert('${type}')" class="bg-red-600 text-white px-2 py-1 rounded text-sm hover:bg-red-700">Alert</button>` : ''}
+          <span class="w-3 h-3 rounded-full ${dot}"></span>
+        </div>
+      `;
+      list.appendChild(div);
+    }
+  }
+
+  window.sendAlert = (type) => {
+    showToast("Alert Sent", `Emergency alert sent for ${type} donors.`);
+  };
+
+  // Inventory Modal
+  document.getElementById("openInventoryBtn").onclick = () => {
+    let fields = '';
+    for (const [type, val] of Object.entries(bloodInventory)) {
+      fields += `
+        <div class="space-y-1">
+          <label>${type} Blood Type</label>
+          <input type="number" id="upd_${type}" value="${val}" class="block w-full border rounded px-2 py-1">
+        </div>`;
+    }
+
+    document.getElementById("modalContainer").innerHTML = `
+      <div class="modal z-50">
+        <div class="bg-white rounded-lg shadow p-6 w-full max-w-2xl mx-auto relative">
+          <button class="absolute top-2 right-2 p-1 text-gray-500" onclick="closeModal()">✕</button>
+          <h2 class="text-xl font-bold mb-4">Update Blood Inventory</h2>
+          <div class="grid grid-cols-2 gap-4">${fields}</div>
+          <div class="mt-4 flex space-x-2">
+            <button onclick="saveInventory()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+            <button onclick="closeModal()" class="border border-gray-300 px-4 py-2 rounded hover:bg-gray-100">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.classList.add("modal-backdrop");
+  };
+
+  window.saveInventory = async () => {
+    for (const type in bloodInventory) {
+      const input = document.getElementById(`upd_${type}`);
+      bloodInventory[type] = parseInt(input.value) || 0;
+    }
+
+    await db.collection("inventories").doc(user.email).set(bloodInventory);
+    showToast("Updated", "Inventory updated successfully.");
+    closeModal();
+    renderInventory();
+    updateStats();
+  };
+
+  window.closeModal = () => {
+    document.getElementById("modalContainer").innerHTML = '';
+    document.body.classList.remove("modal-backdrop");
+  };
+document.getElementById("openRequestModal").onclick = () => {
+  const form = `
+    <div class="modal fixed inset-0 bg-black bg-opacity-30 z-50 flex justify-center items-start pt-10 overflow-auto">
+      <div class="bg-white rounded-lg shadow p-6 w-full max-w-xl relative">
+        <button class="absolute top-2 right-2 p-1 text-gray-500" onclick="closeModal()">✕</button>
+        <h2 class="text-xl font-bold mb-4">Request Blood</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium">Blood Type</label>
+            <select id="reqBloodType" class="block w-full border px-3 py-2 rounded">
+              <option value="">Select</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Urgency</label>
+            <select id="reqUrgency" class="block w-full border px-3 py-2 rounded">
+              <option value="">Select</option>
+              <option>Critical</option>
+              <option>High</option>
+              <option>Moderate</option>
+              <option>Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-6 flex space-x-2">
+          <button onclick="submitBloodRequest()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Submit</button>
+          <button onclick="closeModal()" class="border border-gray-300 px-4 py-2 rounded hover:bg-gray-100">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("modalContainer").innerHTML = form;
+  document.body.classList.add("modal-backdrop");
+};
+  // Update stats section
+  function updateStats() {
+    const totalUnits = Object.values(bloodInventory).reduce((a, b) => a + b, 0);
+    const lowTypes = Object.values(bloodInventory).filter(val => val < 10).length;
+
+    document.getElementById("statTotal").innerText = totalUnits;
+    document.getElementById("statLow").innerText = lowTypes;
+  }
+
+  // Scheduled Appointments
+  function loadAppointments() {
+    const appointmentsTable = document.getElementById("appointmentsTable");
+    appointmentsTable.innerHTML = '';
+    db.collection("donations")
+      .where("locationType", "==", "Hospital")
+      .where("location", "==", user.fullName)
+      .where("status", "in", ["Scheduled", "Confirmed"])
+      .onSnapshot(snapshot => {
+        appointmentsTable.innerHTML = '';
+        if (snapshot.empty) {
+          appointmentsTable.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No appointments found.</td></tr>`;
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-50";
+          tr.innerHTML = `
+            <td class="px-6 py-4">${data.donorEmail}</td>
+            <td class="px-6 py-4">${data.bloodType || 'N/A'}</td>
+            <td class="px-6 py-4">${data.date}</td>
+            <td class="px-6 py-4">${data.time}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 rounded text-white text-sm ${
+                data.status === "Confirmed" ? "bg-green-600" : "bg-yellow-500"
+              }">${data.status}</span>
+            </td>
+            <td class="px-6 py-4">
+              ${
+                data.status !== "Confirmed"
+                  ? `<button onclick="confirmAppointment('${doc.id}')" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">Confirm</button>`
+                  : `<span class="text-sm text-gray-400">Confirmed</span>`
+              }
+            </td>`;
+          appointmentsTable.appendChild(tr);
+        });
+
+        // Update statRecent
+        document.getElementById("statRecent").innerText = snapshot.docs.length;
+      });
+  }
+function loadBloodRequests() {
+  const requestList = document.getElementById("requestList");
+  requestList.innerHTML = "";
+
+  db.collection("requests").orderBy("timestamp", "desc").onSnapshot(async snapshot => {
+    requestList.innerHTML = "";
+    const docs = snapshot.docs;
+
+    if (docs.length === 0) {
+      requestList.innerHTML = `<div class="text-gray-500 text-center py-4">No requests found.</div>`;
+      document.getElementById("statActive").innerText = 0;
+      return;
+    }
+
+    document.getElementById("statActive").innerText = docs.length;
+
+    const limitedDocs = docs.slice(0, 3);
+    const allDocs = docs;
+    let showingAll = false;
+
+    async function enrichRequestData(doc) {
+      const data = doc.data();
+      const enriched = { ...data };
+
+      const emailKey = data.recipientEmail || data.requesterEmail || "";
+      let collection = "recipient";
+
+      if (data.locationType === "Hospital") {
+        collection = "hospital";
+      } else if (data.locationType === "Blood Bank") {
+        collection = "bloodbank";
+      }
+
+      if (emailKey) {
+        const snap = await db.collection(collection).where("email", "==", emailKey).get();
+        if (!snap.empty) {
+          const profile = snap.docs[0].data();
+          enriched.requestedBy = profile.fullName || profile.name || "Unknown";
+          enriched.phone = profile.phone || "N/A";
+          enriched.city = profile.city || "Unknown";
+        } else {
+          enriched.requestedBy = "Unknown";
+          enriched.phone = "N/A";
+          enriched.city = "Unknown";
+        }
+      }
+
+      enriched.timestampFormatted = data.timestamp?.toDate().toLocaleString() || "---";
+      return enriched;
+    }
+
+    async function renderRequests(requestDocs) {
+      requestList.innerHTML = "";
+
+      for (const doc of requestDocs) {
+        const data = await enrichRequestData(doc);
+
+        let urgencyClass = "";
+        switch (data.urgency) {
+          case "Critical": urgencyClass = "bg-red-600 text-white"; break;
+          case "High": urgencyClass = "bg-orange-500 text-white"; break;
+          case "Moderate": urgencyClass = "bg-yellow-400 text-black"; break;
+          case "Low": urgencyClass = "bg-green-500 text-white"; break;
+          default: urgencyClass = "bg-gray-400 text-white";
+        }
+
+        const card = document.createElement("div");
+        card.className = "bg-white border border-gray-200 rounded-lg p-4 shadow space-y-2";
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-bold text-red-600">${data.bloodType || "Unknown"} Blood Request</h3>
+            <span class="px-3 py-1 text-sm rounded-full font-semibold ${urgencyClass}">${data.urgency || "N/A"}</span>
+          </div>
+          <p class="text-sm text-gray-800"><strong>Requested by:</strong> ${data.requestedBy}</p>
+          <p class="text-sm text-gray-800"><strong>📞 Phone:</strong> ${data.phone}</p>
+          <p class="text-sm text-gray-800"><strong>📍 Location:</strong> ${data.city}</p>
+          <p class="text-xs text-gray-500">Requested on: ${data.timestampFormatted}</p>
+        `;
+        requestList.appendChild(card);
+      }
+
+      if (!showingAll && allDocs.length > 3) {
+        const viewMoreBtn = document.createElement("button");
+        viewMoreBtn.className = "w-full mt-4 text-blue-600 hover:underline font-medium text-sm";
+        viewMoreBtn.textContent = "View More";
+        viewMoreBtn.onclick = () => {
+          showingAll = true;
+          renderRequests(allDocs);
+        };
+        requestList.appendChild(viewMoreBtn);
+      }
+    }
+
+    renderRequests(limitedDocs);
+  });
+}
+  async function confirmAppointment(id) {
+    await db.collection("donations").doc(id).update({ status: "Confirmed" });
+    showToast("Confirmed", "Appointment marked as confirmed.");
+  }
+  async function submitBloodRequest() {
+  const bloodType = document.getElementById("reqBloodType").value;
+  const urgency = document.getElementById("reqUrgency").value;
+
+  if (!bloodType || !urgency) {
+    showToast("Error", "Please select both blood type and urgency.");
+    return;
+  }
+
+  const requestData = {
+    bloodType,
+    urgency,
+    locationType: "Hospital",
+    requestedBy: user.fullName,
+    requesterEmail: user.email,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  try {
+    await db.collection("requests").add(requestData);
+    showToast("Success", "Blood request sent successfully.");
+    closeModal();
+  } catch (error) {
+    console.error("Request error:", error);
+    showToast("Error", "Could not submit blood request.");
+  }
+}
+loadInventory();
+loadAppointments();
+loadBloodRequests();// <--- ADD THIS
+</script>
+</body>
+</html>
